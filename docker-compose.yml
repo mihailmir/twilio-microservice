@@ -1,0 +1,11 @@
+version: "3"
+services:
+  api:
+    build: .
+    image: twilio
+    env_file: .env
+    working_dir: /code
+    volumes:
+        - .:/code
+    ports:
+      - "${EXTERNAL_PORT}:${APP_PORT}"
