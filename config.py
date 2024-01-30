@@ -1,6 +1,6 @@
 import os
 
-print(os.getenv('ENV'))
+
 class Envs:
     ENV = os.getenv('ENV', "DEV")
     APP_HOST = os.getenv('APP_HOST')
