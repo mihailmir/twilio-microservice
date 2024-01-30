@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Form, Query
-from fastapi.openapi.models import Response
+from fastapi import APIRouter, Form, Query, Response
 from twilio.twiml.voice_response import VoiceResponse, Dial
 from api.models import Tenant, Location, TwilioNumber
 from api.utils import get_phone, get_logger, send_email_async
+from fastapi.responses import JSONResponse
 from config import Envs
 import time
 
@@ -21,7 +21,7 @@ support_email4 = Envs.SUPPORT_EMAIL_4
 @router.post(
     "/redirect-call",
 )
-def redirect_call(From: str = Form(...), CallStatus: str = Form(...), RecordingUrl: str = Form(...), To: str = Form(...), priority_num: str | None = Query(default=None, max_length=50)):
+async def redirect_call(From: str = Form(...), CallStatus: str = Form(...), RecordingUrl: str | None = Form(default=None), To: str = Form(...), priority_num: str | None = Query(default=None, max_length=50)):
     caller = From
     twilio_phone = To
     logger.info("Caller: %s calling %s.", str(caller), str(twilio_phone))
@@ -32,7 +32,7 @@ def redirect_call(From: str = Form(...), CallStatus: str = Form(...), RecordingU
     phone = get_phone(priority_num)
 
     if CallStatus == 'completed':
-        call_end(From, RecordingUrl, To)
+        await call_end(From, RecordingUrl, To)
 
     if phone:
         dial = Dial(
@@ -76,7 +76,14 @@ async def call_end(From: str = Form(...), RecordingUrl: str = Form(...), To: str
     context['url'] = RecordingUrl
 
     await send_email_async(template='record_template.html', subject='New call from the customer', to=recipients, body=context)
-    print(f'email was send to {recipients} with recording {RecordingUrl}')
+    logger.info(f'email was send to {recipients} with recording {RecordingUrl}')
     response = VoiceResponse()
     response.say('Call finished')
-    return Response(content=str(response), content_type="application/xml")
+    return Response(content=str(response), media_type="application/xml")
+
+
+@router.get(
+    "/ping"
+)
+async def ping_me():
+    return JSONResponse(content={'status': 'OK'})

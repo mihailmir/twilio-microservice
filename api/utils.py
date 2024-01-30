@@ -26,7 +26,7 @@ async def send_email_async(template: str, subject: str, to: [str], body: dict):
     message = MessageSchema(
         subject=subject,
         recipients=to,
-        body=body,
+        template_body=body,
         subtype='html',
     )
 
@@ -45,7 +45,7 @@ def is_time_between(begin_time, end_time, check_time=None):
 
 def get_phone(priority_num):
     phones = []
-    support_phones = SupportPhone.select().order_by('priority').where(SupportPhone.active == True)
+    support_phones = SupportPhone.select().order_by(SupportPhone.priority).where(SupportPhone.active == True)
     for phone in support_phones:
         phones.append(phone)
     try:
