@@ -7,7 +7,7 @@ def main():
         app="api.server:app",
         host=Envs.APP_HOST,
         port=Envs.APP_PORT,
-        reload=True,
+        reload=True if Envs.ENV != "PROD" else False,
         workers=2,
         log_config="log_config.yaml"
     )

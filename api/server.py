@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI
 from api.controllers import router
+from config import Envs
 
 
 def init_routers(app_: FastAPI) -> None:
@@ -12,7 +13,9 @@ def create_app() -> FastAPI:
         title="Locker",
         description="Locker Twilio API",
         version="1.0.0",
-        debug=bool(int(os.getenv('DEBUG')))
+        debug=bool(int(os.getenv('DEBUG'))),
+        docs_url=None if Envs.ENV == "PROD" else "/docs",
+        redoc_url=None if Envs.ENV == "PROD" else "/redoc",
     )
     init_routers(app_=app_)
     return app_
