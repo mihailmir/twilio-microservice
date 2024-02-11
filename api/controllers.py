@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Form, Query, Response
 from twilio.twiml.voice_response import VoiceResponse, Dial
 from api.models import Tenant, Location, TwilioNumber, objects
-from api.utils import get_phone, get_logger, send_email_async
+from api.utils import get_phone, get_logger, send_email_async, get_or_none
 from fastapi.responses import JSONResponse
 from config import Envs
 import time
@@ -66,11 +66,11 @@ async def call_end(From: str = Form(...), RecordingUrl: str = Form(...), To: str
     time.sleep(10)
 
     twilio_phone = To
-    location = await objects.get_or_none(Location.select().join(TwilioNumber).where(TwilioNumber.number.contains(twilio_phone[2:])))
+    location = await get_or_none(Location.select().join(TwilioNumber).where(TwilioNumber.number.contains(twilio_phone[2:])))
     context['to'] = twilio_phone
     context['from'] = From
     context['location'] = location
-    context['tenant'] = await objects.get_or_none(Tenant.select().where(Tenant.phone.contains(context['from'][2:])))
+    context['tenant'] = await get_or_none(Tenant.select().where(Tenant.phone.contains(context['from'][2:])))
 
     recipients = [email for email in [support_email1, support_email2, support_email3, support_email4] if email]
     context['url'] = RecordingUrl

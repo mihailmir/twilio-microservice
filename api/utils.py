@@ -3,7 +3,6 @@ from config import Envs
 from api.models import SupportPhone, objects
 import logging
 
-
 mail_conf = ConnectionConfig(
     MAIL_USERNAME=Envs.EMAIL_HOST_USER,
     MAIL_PASSWORD=Envs.EMAIL_HOST_PASSWORD,
@@ -53,3 +52,11 @@ async def get_phone(priority_num):
     except IndexError:
         return None
     return phone
+
+
+async def get_or_none(query):
+    try:
+        result = await objects.execute(query)
+        return list(result)[0]
+    except IndexError:
+        pass
