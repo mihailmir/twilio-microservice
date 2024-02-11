@@ -66,11 +66,11 @@ async def call_end(From: str = Form(...), RecordingUrl: str = Form(...), To: str
     time.sleep(10)
 
     twilio_phone = To
-    location = await objects.execute(Location.select().join(TwilioNumber).where(TwilioNumber.number.contains(twilio_phone[2:])).get_or_none())
+    location = await objects.get_or_none(Location.select().join(TwilioNumber).where(TwilioNumber.number.contains(twilio_phone[2:])))
     context['to'] = twilio_phone
     context['from'] = From
     context['location'] = location
-    context['tenant'] = await objects.execute(Tenant.select().where(Tenant.phone.contains(context['from'][2:])).get_or_none())
+    context['tenant'] = await objects.get_or_none(Tenant.select().where(Tenant.phone.contains(context['from'][2:])))
 
     recipients = [email for email in [support_email1, support_email2, support_email3, support_email4] if email]
     context['url'] = RecordingUrl
