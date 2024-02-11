@@ -1,13 +1,16 @@
-from peewee import PostgresqlDatabase, Model, CharField, BooleanField, IntegerField, DateTimeField, TextField, ForeignKeyField
+from peewee import Model, CharField, BooleanField, IntegerField, DateTimeField, TextField, ForeignKeyField
 from config import Envs
+import peewee_async
 
-locker_db = PostgresqlDatabase(
+locker_db = peewee_async.PostgresqlDatabase(
     Envs.DB_NAME,
     user=Envs.DB_USER,
     password=Envs.DB_PASS,
     host=Envs.DB_HOST,
     port=Envs.DB_PORT
 )
+locker_db.set_allow_sync(False)
+objects = peewee_async.Manager(locker_db)
 
 
 hearing_source_choices = (

@@ -1,6 +1,6 @@
 from fastapi_mail import ConnectionConfig, MessageSchema, FastMail
 from config import Envs
-from api.models import SupportPhone
+from api.models import SupportPhone, objects
 import logging
 
 
@@ -43,9 +43,9 @@ def is_time_between(begin_time, end_time, check_time=None):
         return check_time >= begin_time or check_time <= end_time
 
 
-def get_phone(priority_num):
+async def get_phone(priority_num):
     phones = []
-    support_phones = SupportPhone.select().order_by(SupportPhone.priority).where(SupportPhone.active == True)
+    support_phones = await objects.execute(SupportPhone.select().order_by(SupportPhone.priority).where(SupportPhone.active == True))
     for phone in support_phones:
         phones.append(phone)
     try:

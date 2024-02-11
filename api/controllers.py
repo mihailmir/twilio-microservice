@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Form, Query, Response
 from twilio.twiml.voice_response import VoiceResponse, Dial
-from api.models import Tenant, Location, TwilioNumber
+from api.models import Tenant, Location, TwilioNumber, objects
 from api.utils import get_phone, get_logger, send_email_async
 from fastapi.responses import JSONResponse
 from config import Envs
@@ -29,7 +29,7 @@ async def redirect_call(From: str = Form(...), CallStatus: str = Form(...), Reco
     logger.info(f"{From}, {To}, {priority_num}")
 
     priority_num = int(priority_num or 0)
-    phone = get_phone(priority_num)
+    phone = await get_phone(priority_num)
 
     if CallStatus == 'completed':
         await call_end(From, RecordingUrl, To)
@@ -66,11 +66,11 @@ async def call_end(From: str = Form(...), RecordingUrl: str = Form(...), To: str
     time.sleep(10)
 
     twilio_phone = To
-    location = Location.select().join(TwilioNumber).where(TwilioNumber.number.contains(twilio_phone[2:])).get_or_none()
+    location = await objects.execute(Location.select().join(TwilioNumber).where(TwilioNumber.number.contains(twilio_phone[2:])).get_or_none())
     context['to'] = twilio_phone
     context['from'] = From
     context['location'] = location
-    context['tenant'] = Tenant.select().where(Tenant.phone.contains(context['from'][2:])).get_or_none()
+    context['tenant'] = await objects.execute(Tenant.select().where(Tenant.phone.contains(context['from'][2:])).get_or_none())
 
     recipients = [email for email in [support_email1, support_email2, support_email3, support_email4] if email]
     context['url'] = RecordingUrl
