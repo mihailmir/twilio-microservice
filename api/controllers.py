@@ -28,13 +28,14 @@ async def redirect_call(From: str = Form(...), CallStatus: str = Form(...),
     twilio_phone = To
     logger.info("Caller: %s calling %s.", str(caller), str(twilio_phone))
     response = VoiceResponse()
-    logger.info(f"{From}, {To}, {priority_num}")
 
+    if CallStatus == 'completed':
+        return await call_end(From, RecordingUrl, To)
+
+    logger.info(f"{From}, {To}, {priority_num}")
     priority_num = int(priority_num or 0)
     phone = await get_phone(priority_num)
 
-    if CallStatus == 'completed':
-        await call_end(From, RecordingUrl, To)
     if phone:
         dial = Dial(
             caller_id=twilio_phone,
@@ -47,7 +48,7 @@ async def redirect_call(From: str = Form(...), CallStatus: str = Form(...),
         response.append(dial)
         logger.info("Caller: %s calling %s.", str(caller), str(phone))
         logger.info(f'Calling to {priority_num + 1} number in order {phone}')
-    if not phone:
+    else:
         response.say(
             'Thank you for calling Local Locker. Sorry we missed your call. All our representatives are currently unavailable. Please leave a message and we will call you back shortly.')
         response.record(timeout=15, transcribe=True, action=f"https://{Envs.CURRENT_DOMAIN}'/call-end")
