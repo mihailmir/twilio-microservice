@@ -50,7 +50,7 @@ async def redirect_call(From: str = Form(...), CallStatus: str = Form(...),
         logger.info(f'Calling to {priority_num + 1} number in order {phone}')
     else:
         response.say(
-            'Thank you for calling Local Locker. Sorry we missed your call. All our representatives are currently unavailable. Please leave a message and we will call you back shortly.')
+            'Thank you for calling ****. Sorry we missed your call. All our representatives are currently unavailable. Please leave a message and we will call you back shortly.')
         response.record(timeout=15, transcribe=True, action=f"https://{Envs.CURRENT_DOMAIN}'/call-end")
         logger.info(f'Record writen')
 

@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "localocker-twilio"
+name = "twilio"
 version = "0.1.0"
 description = ""
 authors = ["mihailmir"]
 readme = "README.md"
-packages = [{include = "localocker_twilio"}]
+packages = [{include = "twilio"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"

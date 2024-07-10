@@ -1,4 +1,3 @@
-# localocker-twilio
 setup env vars in .env
 run
     - docker compose build
