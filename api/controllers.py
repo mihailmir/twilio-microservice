@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Form, Query, Response
 from twilio.twiml.voice_response import VoiceResponse, Dial
-from api.models import Tenant, Location, TwilioNumber, objects
+from api.models import Tenant, Location, TwilioNumber
 from api.utils import get_phone, get_logger, send_email_async, get_or_none
 from fastapi.responses import JSONResponse
 from config import Envs
@@ -9,10 +9,10 @@ import time
 router = APIRouter()
 logger = get_logger()
 
-support_email1 = Envs.SUPPORT_EMAIL_1
-support_email2 = Envs.SUPPORT_EMAIL_2
-support_email3 = Envs.SUPPORT_EMAIL_3
-support_email4 = Envs.SUPPORT_EMAIL_4
+SUPPORT_EMAIL_1 = Envs.SUPPORT_EMAIL_1
+SUPPORT_EMAIL_2 = Envs.SUPPORT_EMAIL_2
+SUPPORT_EMAIL_3 = Envs.SUPPORT_EMAIL_3
+SUPPORT_EMAIL_4 = Envs.SUPPORT_EMAIL_4
 
 
 @router.get(
@@ -21,7 +21,9 @@ support_email4 = Envs.SUPPORT_EMAIL_4
 @router.post(
     "/redirect-call",
 )
-async def redirect_call(From: str = Form(...), CallStatus: str = Form(...), RecordingUrl: str | None = Form(default=None), To: str = Form(...), priority_num: str | None = Query(default=None, max_length=50)):
+async def redirect_call(From: str = Form(...), CallStatus: str = Form(...),
+                        RecordingUrl: str | None = Form(default=None), To: str = Form(...),
+                        priority_num: str | None = Query(default=None, max_length=50)) -> Response:
     caller = From
     twilio_phone = To
     logger.info("Caller: %s calling %s.", str(caller), str(twilio_phone))
@@ -33,7 +35,6 @@ async def redirect_call(From: str = Form(...), CallStatus: str = Form(...), Reco
 
     if CallStatus == 'completed':
         await call_end(From, RecordingUrl, To)
-
     if phone:
         dial = Dial(
             caller_id=twilio_phone,
@@ -61,21 +62,23 @@ async def redirect_call(From: str = Form(...), CallStatus: str = Form(...), Reco
 @router.post(
     "/call-end",
 )
-async def call_end(From: str = Form(...), RecordingUrl: str = Form(...), To: str = Form(...)):
+async def call_end(From: str = Form(...), RecordingUrl: str = Form(...), To: str = Form(...)) -> Response:
     context = {}
     time.sleep(10)
 
     twilio_phone = To
-    location = await get_or_none(Location.select().join(TwilioNumber).where(TwilioNumber.number.contains(twilio_phone[2:])))
+    location = await get_or_none(
+        Location.select().join(TwilioNumber).where(TwilioNumber.number.contains(twilio_phone[2:])))
     context['to'] = twilio_phone
     context['from'] = From
     context['location'] = location
     context['tenant'] = await get_or_none(Tenant.select().where(Tenant.phone.contains(context['from'][2:])))
 
-    recipients = [email for email in [support_email1, support_email2, support_email3, support_email4] if email]
+    recipients = [email for email in [SUPPORT_EMAIL_1, SUPPORT_EMAIL_2, SUPPORT_EMAIL_3, SUPPORT_EMAIL_4] if email]
     context['url'] = RecordingUrl
 
-    await send_email_async(template='record_template.html', subject='New call from the customer', to=recipients, body=context)
+    await send_email_async(template='record_template.html', subject='New call from the customer', to=recipients,
+                           body=context)
     logger.info(f'email was send to {recipients} with recording {RecordingUrl}')
     response = VoiceResponse()
     response.say('Call finished')
@@ -85,5 +88,5 @@ async def call_end(From: str = Form(...), RecordingUrl: str = Form(...), To: str
 @router.get(
     "/ping"
 )
-async def ping_me():
+async def ping_me() -> JSONResponse:
     return JSONResponse(content={'status': 'OK'})

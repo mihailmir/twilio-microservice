@@ -1,4 +1,6 @@
 from fastapi_mail import ConnectionConfig, MessageSchema, FastMail
+from peewee_async import AsyncQueryWrapper
+
 from config import Envs
 from api.models import SupportPhone, objects
 import logging
@@ -17,11 +19,11 @@ mail_conf = ConnectionConfig(
 )
 
 
-def get_logger():
+def get_logger() -> logging.Logger:
     return logging.getLogger(__name__)
 
 
-async def send_email_async(template: str, subject: str, to: [str], body: dict):
+async def send_email_async(template: str, subject: str, to: [str], body: dict) -> None:
     message = MessageSchema(
         subject=subject,
         recipients=to,
@@ -33,7 +35,7 @@ async def send_email_async(template: str, subject: str, to: [str], body: dict):
     await fm.send_message(message, template_name=template, )
 
 
-def is_time_between(begin_time, end_time, check_time=None):
+def is_time_between(begin_time, end_time, check_time=None) -> bool:
     # If check time is not given, default to current UTC time
 
     if begin_time < end_time:
@@ -42,21 +44,19 @@ def is_time_between(begin_time, end_time, check_time=None):
         return check_time >= begin_time or check_time <= end_time
 
 
-async def get_phone(priority_num):
-    phones = []
-    support_phones = await objects.execute(SupportPhone.select().order_by(SupportPhone.priority).where(SupportPhone.active == True))
-    for phone in support_phones:
-        phones.append(phone)
+async def get_phone(priority_num) -> SupportPhone | None:
     try:
-        phone = phones[priority_num]
+        support_phones = await objects.execute(
+            SupportPhone.select().where(SupportPhone.active == True).order_by(SupportPhone.priority).limit(1).offset(
+                priority_num - 1))
+        return list(support_phones)[0]
     except IndexError:
-        return None
-    return phone
+        return
 
 
-async def get_or_none(query):
+async def get_or_none(query) -> AsyncQueryWrapper | None:
     try:
         result = await objects.execute(query)
         return list(result)[0]
     except IndexError:
-        pass
+        return
